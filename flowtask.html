@@ -1,0 +1,1396 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>FlowTask</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&family=Cairo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    :root {
+      --bg: #0d0f14;
+      --surface: #13161e;
+      --surface2: #1a1e28;
+      --border: rgba(255,255,255,0.06);
+      --border-hover: rgba(255,255,255,0.12);
+      --accent: #6ee7b7;
+      --accent2: #38bdf8;
+      --accent3: #f472b6;
+      --text: #e8edf5;
+      --text-muted: #6b7a96;
+      --text-dim: #3d4a60;
+      --danger: #ff6b6b;
+      --warn: #fbbf24;
+      --success: #6ee7b7;
+      --font-main: 'DM Sans', sans-serif;
+      --font-head: 'Syne', sans-serif;
+    }
+
+    html[lang="ar"] {
+      --font-main: 'Cairo', sans-serif;
+      --font-head: 'Cairo', sans-serif;
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg);
+      font-family: var(--font-main);
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 2rem 1rem 5rem;
+      overflow-x: hidden;
+      transition: direction 0.2s;
+    }
+
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background:
+        radial-gradient(ellipse 60% 40% at 20% 10%, rgba(110,231,183,0.07) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 50% at 80% 80%, rgba(56,189,248,0.06) 0%, transparent 60%),
+        radial-gradient(ellipse 40% 30% at 50% 50%, rgba(244,114,182,0.04) 0%, transparent 60%);
+      pointer-events: none; z-index: 0;
+    }
+
+    .app {
+      position: relative; z-index: 1;
+      width: 100%; max-width: 700px;
+    }
+
+    /* ── HEADER ── */
+    .header {
+      margin-bottom: 1.5rem; padding: 0 0.5rem;
+      display: flex; align-items: center;
+      justify-content: space-between; gap: 1rem;
+    }
+
+    .brand {
+      display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.25rem;
+    }
+
+    .brand-icon {
+      width: 40px; height: 40px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-radius: 12px; display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem; color: #0d0f14;
+      box-shadow: 0 0 20px rgba(110,231,183,0.3); flex-shrink: 0;
+    }
+
+    .brand-name {
+      font-family: var(--font-head); font-size: 1.8rem;
+      font-weight: 800; color: var(--text); letter-spacing: -0.5px;
+    }
+
+    .brand-dot { color: var(--accent); }
+    .header-sub { font-size: 0.78rem; color: var(--text-muted); letter-spacing: 0.3px; }
+
+    /* header right cluster */
+    .header-controls { display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0; }
+
+    /* Language toggle */
+    .lang-btn {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 0.9rem; padding: 0.38rem 0.85rem;
+      display: flex; align-items: center; gap: 0.4rem;
+      cursor: pointer; transition: 0.2s;
+      font-family: var(--font-main); font-size: 0.78rem;
+      font-weight: 600; color: var(--text-muted);
+      letter-spacing: 0.3px;
+    }
+
+    .lang-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+    .lang-btn i { font-size: 0.8rem; }
+
+    /* Notification bell */
+    .notif-bell {
+      position: relative; background: var(--surface);
+      border: 1px solid var(--border); border-radius: 1rem;
+      width: 44px; height: 44px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: 0.2s; color: var(--text-muted); font-size: 1rem;
+    }
+
+    .notif-bell:hover { border-color: var(--warn); color: var(--warn); background: rgba(251,191,36,0.06); }
+
+    .notif-badge {
+      position: absolute; top: -6px; right: -6px;
+      background: var(--danger); color: #fff;
+      font-size: 0.58rem; font-weight: 700;
+      min-width: 18px; height: 18px; border-radius: 9px; padding: 0 4px;
+      display: none; align-items: center; justify-content: center;
+      border: 2px solid var(--bg);
+    }
+
+    html[dir="rtl"] .notif-badge { right: auto; left: -6px; }
+    .notif-badge.visible { display: flex; }
+
+    /* ── STATS ── */
+    .stats-row { display: flex; gap: 0.75rem; margin-bottom: 1.5rem; }
+
+    .stat-chip {
+      flex: 1; background: var(--surface);
+      border: 1px solid var(--border); border-radius: 1rem;
+      padding: 0.75rem 1rem; text-align: center; transition: 0.2s;
+    }
+
+    .stat-chip:hover { border-color: var(--border-hover); }
+
+    .stat-num {
+      font-family: var(--font-head); font-size: 1.6rem;
+      font-weight: 700; color: var(--text); line-height: 1;
+    }
+
+    .stat-num.accent { color: var(--accent); }
+    .stat-num.blue   { color: var(--accent2); }
+    .stat-num.warn   { color: var(--warn); }
+
+    .stat-label {
+      font-size: 0.68rem; color: var(--text-muted);
+      margin-top: 0.28rem; text-transform: uppercase; letter-spacing: 0.6px;
+      font-family: var(--font-main);
+    }
+
+    html[lang="ar"] .stat-label { text-transform: none; letter-spacing: 0; font-size: 0.72rem; }
+
+    /* ── PROGRESS ── */
+    .progress-bar-wrap {
+      height: 4px; background: var(--surface2);
+      border-radius: 99px; overflow: hidden; margin-bottom: 1.5rem;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      border-radius: 99px;
+      transition: width 0.5s cubic-bezier(0.4,0,0.2,1);
+      box-shadow: 0 0 8px rgba(110,231,183,0.5);
+    }
+
+    /* ── CARD ── */
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 1.75rem; overflow: hidden;
+    }
+
+    /* ── ADD SECTION ── */
+    .add-section {
+      padding: 1.5rem 1.5rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .add-row { display: flex; gap: 0.6rem; align-items: center; }
+
+    .input-wrap { flex: 1; position: relative; }
+
+    .input-wrap i.field-icon {
+      position: absolute; left: 1.1rem; top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-dim); font-size: 0.9rem;
+      transition: color 0.2s; pointer-events: none;
+    }
+
+    html[dir="rtl"] .input-wrap i.field-icon { left: auto; right: 1.1rem; }
+
+    .input-wrap:focus-within i.field-icon { color: var(--accent); }
+
+    #taskInput {
+      width: 100%; background: var(--surface2);
+      border: 1px solid var(--border); border-radius: 1rem;
+      padding: 0.85rem 1rem 0.85rem 2.6rem;
+      font-family: var(--font-main); font-size: 0.95rem; color: var(--text);
+      outline: none; transition: 0.2s; text-align: inherit;
+    }
+
+    html[dir="rtl"] #taskInput { padding: 0.85rem 2.6rem 0.85rem 1rem; }
+
+    #taskInput::placeholder { color: var(--text-dim); }
+
+    #taskInput:focus {
+      border-color: rgba(110,231,183,0.35);
+      box-shadow: 0 0 0 3px rgba(110,231,183,0.08);
+      background: #1e2231;
+    }
+
+    .btn-add {
+      background: linear-gradient(135deg, var(--accent), #34d399);
+      border: none; border-radius: 1rem;
+      padding: 0.85rem 1.4rem;
+      font-family: var(--font-head); font-size: 0.85rem;
+      font-weight: 700; color: #071a12; cursor: pointer;
+      display: flex; align-items: center; gap: 0.4rem;
+      white-space: nowrap; transition: 0.2s;
+      box-shadow: 0 4px 15px rgba(110,231,183,0.25);
+    }
+
+    html[lang="ar"] .btn-add { font-family: 'Cairo', sans-serif; font-size: 0.92rem; }
+
+    .btn-add:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(110,231,183,0.35); }
+    .btn-add:active { transform: scale(0.97); }
+
+    /* ── OPTIONS ROW ── */
+    .options-row {
+      display: flex; gap: 1rem; margin-top: 0.9rem;
+      align-items: center; flex-wrap: wrap;
+    }
+
+    .opt-group { display: flex; align-items: center; gap: 0.45rem; }
+
+    .opt-label {
+      font-size: 0.72rem; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: 0.6px; white-space: nowrap;
+    }
+
+    html[lang="ar"] .opt-label { text-transform: none; letter-spacing: 0; font-size: 0.8rem; }
+
+    .priority-chip {
+      background: transparent; border: 1px solid var(--border);
+      border-radius: 0.6rem; padding: 0.3rem 0.8rem;
+      font-family: var(--font-main); font-size: 0.75rem;
+      font-weight: 500; color: var(--text-muted); cursor: pointer; transition: 0.15s;
+    }
+
+    html[lang="ar"] .priority-chip { font-size: 0.82rem; }
+
+    .priority-chip[data-p="low"].sel  { background: rgba(110,231,183,0.12); border-color: var(--accent); color: var(--accent); }
+    .priority-chip[data-p="med"].sel  { background: rgba(251,191,36,0.12);  border-color: var(--warn); color: var(--warn); }
+    .priority-chip[data-p="high"].sel { background: rgba(255,107,107,0.12); border-color: var(--danger); color: var(--danger); }
+
+    #dueDateInput {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 0.65rem; padding: 0.3rem 0.7rem;
+      font-family: var(--font-main); font-size: 0.75rem;
+      color: var(--text-muted); outline: none; cursor: pointer;
+      transition: 0.2s; color-scheme: dark;
+    }
+
+    #dueDateInput:hover, #dueDateInput:focus { border-color: rgba(56,189,248,0.4); color: var(--accent2); }
+
+    /* ── FILTER BAR ── */
+    .filter-bar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.9rem 1.5rem; border-bottom: 1px solid var(--border);
+      gap: 0.75rem; flex-wrap: wrap;
+    }
+
+    .filter-tabs {
+      display: flex; background: var(--surface2);
+      border-radius: 0.75rem; padding: 0.2rem; gap: 0.2rem;
+    }
+
+    .filter-btn {
+      background: transparent; border: none; border-radius: 0.5rem;
+      padding: 0.4rem 0.85rem;
+      font-family: var(--font-main); font-size: 0.78rem;
+      font-weight: 500; color: var(--text-muted); cursor: pointer; transition: 0.15s;
+    }
+
+    html[lang="ar"] .filter-btn { font-size: 0.82rem; }
+
+    .filter-btn.active {
+      background: var(--surface); color: var(--text);
+      font-weight: 600; box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+    }
+
+    .sort-clear { display: flex; align-items: center; gap: 0.5rem; }
+
+    .btn-sm {
+      background: transparent; border: 1px solid var(--border);
+      border-radius: 0.6rem; padding: 0.38rem 0.8rem;
+      font-family: var(--font-main); font-size: 0.72rem;
+      font-weight: 500; color: var(--text-muted); cursor: pointer;
+      transition: 0.2s; display: flex; align-items: center; gap: 0.35rem;
+    }
+
+    html[lang="ar"] .btn-sm { font-size: 0.8rem; }
+
+    .btn-sm:hover { border-color: var(--border-hover); color: var(--text); }
+    .btn-sm.danger:hover { border-color: var(--danger); color: var(--danger); background: rgba(255,107,107,0.06); }
+
+    /* ── TASKS LIST ── */
+    .tasks-wrap { padding: 1rem 1.2rem 1.2rem; max-height: 480px; overflow-y: auto; }
+
+    .tasks-wrap::-webkit-scrollbar { width: 4px; }
+    .tasks-wrap::-webkit-scrollbar-track { background: transparent; }
+    .tasks-wrap::-webkit-scrollbar-thumb { background: var(--surface2); border-radius: 99px; }
+
+    .task-list { list-style: none; display: flex; flex-direction: column; gap: 0.5rem; }
+
+    /* ── TASK ITEM ── */
+    .task-item {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 1rem; padding: 0.8rem 0.9rem;
+      display: flex; align-items: flex-start; gap: 0.75rem;
+      transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+      position: relative; overflow: hidden;
+      animation: slideIn 0.25s cubic-bezier(0.4,0,0.2,1) both;
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(-8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* priority side bar */
+    .task-item::before {
+      content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+      width: 3px; border-radius: 0 3px 3px 0; opacity: 0; transition: opacity 0.2s;
+    }
+
+    html[dir="rtl"] .task-item::before { left: auto; right: 0; border-radius: 3px 0 0 3px; }
+
+    .task-item[data-p="high"]::before { background: var(--danger); }
+    .task-item[data-p="med"]::before  { background: var(--warn); }
+    .task-item[data-p="low"]::before  { background: var(--accent); }
+
+    .task-item:hover { border-color: var(--border-hover); transform: translateY(-1px); box-shadow: 0 8px 24px rgba(0,0,0,0.2); }
+    .task-item:hover::before { opacity: 1; }
+
+    .task-item.overdue:not(.done) { border-color: rgba(255,107,107,0.22); background: rgba(255,107,107,0.035); }
+    .task-item.due-soon:not(.done) { border-color: rgba(251,191,36,0.18); background: rgba(251,191,36,0.025); }
+    .task-item.done { opacity: 0.5; background: rgba(110,231,183,0.03); }
+    .task-item.done .check-custom { background: var(--accent); border-color: var(--accent); box-shadow: 0 0 10px rgba(110,231,183,0.35); }
+    .task-item.done .check-custom i { opacity: 1; transform: scale(1); }
+
+    /* ── CHECKBOX ── */
+    .check-wrap { position: relative; flex-shrink: 0; padding-top: 1px; }
+
+    .check-custom {
+      width: 22px; height: 22px; border: 1.5px solid var(--text-dim);
+      border-radius: 6px; display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+      background: transparent; flex-shrink: 0;
+    }
+
+    .check-custom:hover { border-color: var(--accent); background: rgba(110,231,183,0.08); }
+
+    .check-custom.checked {
+      background: var(--accent); border-color: var(--accent);
+      box-shadow: 0 0 10px rgba(110,231,183,0.35);
+    }
+
+    .check-custom i {
+      font-size: 0.65rem; color: #071a12;
+      opacity: 0; transform: scale(0);
+      transition: all 0.18s cubic-bezier(0.4,0,0.2,1);
+    }
+
+    .check-custom.checked i { opacity: 1; transform: scale(1); }
+
+    /* ── TASK BODY ── */
+    .task-body { flex: 1; min-width: 0; }
+
+    .task-text {
+      font-size: 0.92rem; font-weight: 400; color: var(--text);
+      word-break: break-word; line-height: 1.5; transition: 0.2s; cursor: text;
+      text-align: start;
+    }
+
+    html[lang="ar"] .task-text { font-size: 0.96rem; line-height: 1.6; }
+
+    .task-text.done-text { text-decoration: line-through; color: var(--text-dim); }
+
+    .task-meta {
+      display: flex; align-items: center;
+      gap: 0.4rem; margin-top: 0.3rem; flex-wrap: wrap;
+    }
+
+    .task-created { font-size: 0.66rem; color: var(--text-dim); }
+
+    .task-badge {
+      font-size: 0.62rem; padding: 0.12rem 0.45rem;
+      border-radius: 0.4rem; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.4px;
+      font-family: 'DM Sans', sans-serif;
+    }
+
+    html[lang="ar"] .task-badge { text-transform: none; letter-spacing: 0; font-family: 'Cairo', sans-serif; font-size: 0.68rem; }
+
+    .badge-low  { background: rgba(110,231,183,0.1); color: var(--accent); }
+    .badge-med  { background: rgba(251,191,36,0.1);  color: var(--warn); }
+    .badge-high { background: rgba(255,107,107,0.1); color: var(--danger); }
+
+    .due-chip {
+      display: inline-flex; align-items: center; gap: 0.28rem;
+      font-size: 0.66rem; font-weight: 500;
+      padding: 0.14rem 0.48rem; border-radius: 0.4rem;
+      border: 1px solid transparent; white-space: nowrap;
+    }
+
+    html[lang="ar"] .due-chip { font-size: 0.72rem; font-family: 'Cairo', sans-serif; }
+
+    .due-chip.ok      { background: rgba(110,231,183,0.08); color: var(--accent); border-color: rgba(110,231,183,0.18); }
+    .due-chip.soon    { background: rgba(251,191,36,0.1); color: var(--warn); border-color: rgba(251,191,36,0.28); animation: pulseSoon 2s infinite; }
+    .due-chip.overdue { background: rgba(255,107,107,0.1); color: var(--danger); border-color: rgba(255,107,107,0.28); animation: pulseOverdue 1.6s infinite; }
+
+    @keyframes pulseSoon { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+    @keyframes pulseOverdue {
+      0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(255,107,107,0.25); }
+      50% { opacity: 0.8; box-shadow: 0 0 0 4px rgba(255,107,107,0); }
+    }
+
+    .edit-input {
+      width: 100%; background: transparent;
+      border: none; border-bottom: 1px solid var(--accent);
+      outline: none; font-family: var(--font-main);
+      font-size: 0.92rem; color: var(--text); padding: 0.1rem 0;
+      text-align: start;
+    }
+
+    .task-actions {
+      display: flex; gap: 0.25rem; opacity: 0; transition: opacity 0.15s; flex-shrink: 0;
+    }
+
+    .task-item:hover .task-actions { opacity: 1; }
+
+    .icon-btn {
+      width: 28px; height: 28px; border: none; border-radius: 7px;
+      background: transparent; display: flex; align-items: center;
+      justify-content: center; font-size: 0.75rem; cursor: pointer;
+      transition: 0.15s; color: var(--text-muted);
+    }
+
+    .icon-btn:hover { background: var(--surface); }
+    .icon-btn.edit:hover { color: var(--accent2); }
+    .icon-btn.del:hover  { color: var(--danger); }
+
+    /* ── NOTIFICATION PANEL ── */
+    .notif-panel {
+      position: fixed; top: 1rem; right: 1rem;
+      width: 340px; max-width: calc(100vw - 2rem);
+      background: var(--surface); border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 1.25rem;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.55);
+      z-index: 500; overflow: hidden; display: none;
+    }
+
+    html[dir="rtl"] .notif-panel { right: auto; left: 1rem; }
+
+    .notif-panel.open {
+      display: block;
+      animation: panelIn 0.22s cubic-bezier(0.4,0,0.2,1) both;
+    }
+
+    @keyframes panelIn {
+      from { opacity: 0; transform: translateY(-10px) scale(0.96); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .notif-header {
+      padding: 1rem 1.2rem 0.8rem; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+
+    .notif-title {
+      font-family: var(--font-head); font-size: 0.9rem;
+      font-weight: 700; color: var(--text);
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+
+    .notif-title i { color: var(--warn); }
+
+    .notif-close {
+      background: transparent; border: none; color: var(--text-muted);
+      cursor: pointer; font-size: 0.9rem; transition: 0.15s;
+      width: 26px; height: 26px;
+      display: flex; align-items: center; justify-content: center; border-radius: 6px;
+    }
+
+    .notif-close:hover { background: var(--surface2); color: var(--text); }
+
+    .notif-list { max-height: 340px; overflow-y: auto; padding: 0.6rem; }
+    .notif-list::-webkit-scrollbar { width: 3px; }
+    .notif-list::-webkit-scrollbar-thumb { background: var(--surface2); border-radius: 99px; }
+
+    .notif-item {
+      display: flex; align-items: flex-start; gap: 0.65rem;
+      padding: 0.7rem 0.8rem; border-radius: 0.75rem;
+      margin-bottom: 0.3rem; cursor: pointer; transition: 0.15s;
+      border: 1px solid transparent;
+    }
+
+    .notif-item:last-child { margin-bottom: 0; }
+    .notif-item:hover { background: var(--surface2); border-color: var(--border); }
+
+    .notif-dot {
+      width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; margin-top: 5px;
+    }
+
+    .notif-dot.overdue { background: var(--danger); box-shadow: 0 0 6px rgba(255,107,107,0.6); }
+    .notif-dot.soon    { background: var(--warn);   box-shadow: 0 0 6px rgba(251,191,36,0.5); }
+
+    .notif-text { flex: 1; min-width: 0; text-align: start; }
+    .notif-task { font-size: 0.82rem; color: var(--text); font-weight: 500; line-height: 1.35; }
+    .notif-due  { font-size: 0.7rem; color: var(--text-muted); margin-top: 0.18rem; display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap; }
+
+    html[lang="ar"] .notif-task { font-size: 0.88rem; }
+    html[lang="ar"] .notif-due  { font-size: 0.76rem; }
+
+    .notif-empty {
+      text-align: center; padding: 2.2rem 1rem;
+      color: var(--text-dim); font-size: 0.82rem;
+    }
+
+    .notif-empty i { display: block; font-size: 1.6rem; margin-bottom: 0.6rem; opacity: 0.35; }
+
+    /* ── EMPTY STATE ── */
+    .empty-state { text-align: center; padding: 3.5rem 1rem; color: var(--text-dim); }
+    .empty-icon { font-size: 2.5rem; margin-bottom: 1rem; opacity: 0.3; }
+    .empty-state h3 { font-family: var(--font-head); font-size: 1rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.4rem; }
+    .empty-state p  { font-size: 0.8rem; }
+
+    /* ── FOOTER ── */
+    .footer {
+      padding: 0.85rem 1.5rem; border-top: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 0.5rem;
+    }
+
+    .footer-hint {
+      font-size: 0.7rem; color: var(--text-dim);
+      display: flex; align-items: center; gap: 0.4rem;
+    }
+
+    html[lang="ar"] .footer-hint { font-size: 0.75rem; }
+
+    .kbd {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 4px; padding: 0.1rem 0.4rem;
+      font-size: 0.65rem; color: var(--text-muted);
+      font-family: 'DM Sans', monospace;
+    }
+
+    .save-indicator { transition: color 0.3s; }
+    .save-indicator.saved { color: var(--accent); }
+
+    /* ── TOAST ── */
+    .toast-wrap {
+      position: fixed; bottom: 2rem; right: 2rem; z-index: 600;
+      display: flex; flex-direction: column; gap: 0.5rem; pointer-events: none;
+    }
+
+    html[dir="rtl"] .toast-wrap { right: auto; left: 2rem; }
+
+    .toast {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 0.85rem; padding: 0.65rem 1.05rem;
+      font-size: 0.8rem; color: var(--text);
+      display: flex; align-items: center; gap: 0.5rem;
+      animation: toastIn 0.3s ease both;
+      box-shadow: 0 8px 28px rgba(0,0,0,0.45); max-width: 300px;
+      font-family: var(--font-main);
+    }
+
+    html[lang="ar"] .toast { font-size: 0.86rem; }
+
+    .toast i { flex-shrink: 0; color: var(--accent); }
+    .toast.warn   i { color: var(--warn); }
+    .toast.danger i { color: var(--danger); }
+
+    @keyframes toastIn  { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+    @keyframes toastOut { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(20px); } }
+
+    html[dir="rtl"] @keyframes toastIn  { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
+
+    /* ── MOBILE ── */
+    @media (max-width: 520px) {
+      .stats-row { gap: 0.4rem; }
+      .add-row { flex-wrap: wrap; }
+      .btn-add { width: 100%; justify-content: center; }
+      .task-actions { opacity: 1; }
+      .options-row { gap: 0.6rem; }
+      .notif-panel { right: 0.5rem; left: 0.5rem; width: auto; top: 0.5rem; }
+      html[dir="rtl"] .notif-panel { right: 0.5rem; left: 0.5rem; }
+      .filter-btn { padding: 0.4rem 0.55rem; font-size: 0.72rem; }
+      .toast-wrap { right: 1rem; left: 1rem; }
+      html[dir="rtl"] .toast-wrap { right: 1rem; left: 1rem; }
+      .toast { max-width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div>
+      <div class="brand">
+        <div class="brand-icon"><i class="fas fa-bolt"></i></div>
+        <div class="brand-name">Flow<span class="brand-dot">.</span></div>
+      </div>
+      <div class="header-sub" id="headerSub">Stay focused. Get it done.</div>
+    </div>
+    <div class="header-controls">
+      <button class="lang-btn" id="langBtn">
+        <i class="fas fa-globe"></i>
+        <span id="langLabel">عربي</span>
+      </button>
+      <button class="notif-bell" id="notifBell" title="Reminders">
+        <i class="fas fa-bell"></i>
+        <span class="notif-badge" id="notifBadge">0</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-row">
+    <div class="stat-chip">
+      <div class="stat-num" id="statTotal">0</div>
+      <div class="stat-label" id="lblTotal">Total</div>
+    </div>
+    <div class="stat-chip">
+      <div class="stat-num blue" id="statActive">0</div>
+      <div class="stat-label" id="lblActive">Active</div>
+    </div>
+    <div class="stat-chip">
+      <div class="stat-num accent" id="statDone">0</div>
+      <div class="stat-label" id="lblDone">Done</div>
+    </div>
+    <div class="stat-chip">
+      <div class="stat-num warn" id="statUrgent">0</div>
+      <div class="stat-label" id="lblUrgent">Urgent</div>
+    </div>
+  </div>
+
+  <!-- PROGRESS -->
+  <div class="progress-bar-wrap">
+    <div class="progress-bar-fill" id="progressBar" style="width:0%"></div>
+  </div>
+
+  <!-- CARD -->
+  <div class="card">
+
+    <!-- ADD -->
+    <div class="add-section">
+      <div class="add-row">
+        <div class="input-wrap">
+          <input type="text" id="taskInput" autocomplete="off">
+          <i class="fas fa-plus field-icon"></i>
+        </div>
+        <button class="btn-add" id="addBtn">
+          <i class="fas fa-arrow-up"></i>
+          <span id="addBtnLabel">Add</span>
+        </button>
+      </div>
+      <div class="options-row">
+        <div class="opt-group">
+          <span class="opt-label" id="lblPriority">Priority:</span>
+          <button class="priority-chip sel" data-p="low" id="chipLow">Low</button>
+          <button class="priority-chip" data-p="med" id="chipMed">Med</button>
+          <button class="priority-chip" data-p="high" id="chipHigh">High</button>
+        </div>
+        <div class="opt-group">
+          <span class="opt-label" style="color:var(--accent2)" id="lblDue">
+            <i class="fas fa-calendar-alt"></i> Due:
+          </span>
+          <input type="date" id="dueDateInput">
+        </div>
+      </div>
+    </div>
+
+    <!-- FILTER -->
+    <div class="filter-bar">
+      <div class="filter-tabs">
+        <button class="filter-btn active" data-filter="all"    id="fAll">All</button>
+        <button class="filter-btn" data-filter="active"        id="fActive">Active</button>
+        <button class="filter-btn" data-filter="done"          id="fDone">Done</button>
+        <button class="filter-btn" data-filter="urgent"        id="fUrgent">🔔 Urgent</button>
+      </div>
+      <div class="sort-clear">
+        <button class="btn-sm" id="sortBtn"><i class="fas fa-arrow-up-wide-short"></i> <span id="sortLabel">By date</span></button>
+        <button class="btn-sm danger" id="clearBtn"><i class="fas fa-trash"></i> <span id="clearLabel">Clear done</span></button>
+      </div>
+    </div>
+
+    <!-- TASKS -->
+    <div class="tasks-wrap">
+      <ul class="task-list" id="taskList"></ul>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="footer">
+      <span class="footer-hint">
+        <i class="fas fa-database"></i>
+        <span id="saveIndicator" class="save-indicator" data-en="Auto-saved" data-ar="حُفظ تلقائياً">Auto-saved</span>
+      </span>
+      <span class="footer-hint" id="footerHint">
+        <kbd class="kbd">↵</kbd> Add &nbsp;
+        <kbd class="kbd">Dbl-click</kbd> Edit &nbsp;
+        <kbd class="kbd">Esc</kbd> Cancel
+      </span>
+    </div>
+  </div>
+</div>
+
+<!-- NOTIFICATION PANEL -->
+<div class="notif-panel" id="notifPanel">
+  <div class="notif-header">
+    <div class="notif-title"><i class="fas fa-bell"></i> <span id="notifTitle">Reminders</span></div>
+    <button class="notif-close" id="notifClose"><i class="fas fa-xmark"></i></button>
+  </div>
+  <div class="notif-list" id="notifList"></div>
+</div>
+
+<!-- TOAST -->
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+(function () {
+
+  /* ══════════════════════════════════════════
+     TRANSLATIONS
+  ══════════════════════════════════════════ */
+  const T = {
+    en: {
+      headerSub:    'Stay focused. Get it done.',
+      langLabel:    'عربي',
+      addPlaceholder: 'What needs to be done?',
+      addBtn:       'Add',
+      lblTotal:     'Total',
+      lblActive:    'Active',
+      lblDone:      'Done',
+      lblUrgent:    'Urgent',
+      lblPriority:  'Priority:',
+      lblDue:       'Due:',
+      chipLow:      'Low',
+      chipMed:      'Med',
+      chipHigh:     'High',
+      fAll:         'All',
+      fActive:      'Active',
+      fDone:        'Done',
+      fUrgent:      '🔔 Urgent',
+      sortDate:     'By date',
+      sortPriority: 'By priority',
+      sortDue:      'By due date',
+      clearDone:    'Clear done',
+      saveInd:      'Auto-saved',
+      footerHint:   '<kbd class="kbd">↵</kbd> Add &nbsp;<kbd class="kbd">Dbl-click</kbd> Edit &nbsp;<kbd class="kbd">Esc</kbd> Cancel',
+      notifTitle:   'Reminders',
+      notifEmpty:   'All clear — no urgent tasks!',
+      badgeLow:     'Low', badgeMed: 'Med', badgeHigh: 'High',
+      emptyDone:    'Nothing completed yet', emptyDoneP: '',
+      emptyActive:  'All done! 🎉', emptyActiveP: '',
+      emptyUrgent:  'No urgent tasks', emptyUrgentP: 'Everything is on track ✓',
+      emptyAll:     'No tasks yet', emptyAllP: 'Add your first task above',
+      toastAdded:   'Task added!',
+      toastDone:    'Task completed! ✓',
+      toastActive:  'Marked active',
+      toastDeleted: 'Task deleted',
+      toastCleared: (n) => `${n} task${n !== 1 ? 's' : ''} cleared`,
+      dueToday:     'Today',
+      dueTomorrow:  'Tomorrow',
+      dueInDays:    (n) => `in ${n}d`,
+      dueOverdue:   (n) => `${n}d overdue`,
+      dueLabelFull: (info) => {
+        if (info.status === 'overdue') return `Overdue by ${info.days} day${info.days !== 1 ? 's' : ''}`;
+        if (info.label) return `Due ${info.label}`;
+        return `Due in ${info.days} days`;
+      },
+      notifOverdue: (n) => `Overdue by ${n} day${n !== 1 ? 's' : ''}`,
+      notifSoon:    (label) => `Due ${label}`,
+      locale:       'en',
+      dir:          'ltr',
+      notifBellTitle: 'Reminders',
+    },
+    ar: {
+      headerSub:    'ابقَ مركّزاً. أنجز مهامك.',
+      langLabel:    'English',
+      addPlaceholder: 'ماذا تريد أن تنجز؟',
+      addBtn:       'إضافة',
+      lblTotal:     'الكل',
+      lblActive:    'نشطة',
+      lblDone:      'منجزة',
+      lblUrgent:    'عاجلة',
+      lblPriority:  'الأولوية:',
+      lblDue:       'الموعد:',
+      chipLow:      'منخفضة',
+      chipMed:      'متوسطة',
+      chipHigh:     'عالية',
+      fAll:         'الكل',
+      fActive:      'النشطة',
+      fDone:        'المنجزة',
+      fUrgent:      '🔔 عاجلة',
+      sortDate:     'حسب التاريخ',
+      sortPriority: 'حسب الأولوية',
+      sortDue:      'حسب الموعد',
+      clearDone:    'حذف المنجزة',
+      saveInd:      'حُفظ تلقائياً',
+      footerHint:   '<kbd class="kbd">↵</kbd> إضافة &nbsp;<kbd class="kbd">نقر مزدوج</kbd> تعديل &nbsp;<kbd class="kbd">Esc</kbd> إلغاء',
+      notifTitle:   'التذكيرات',
+      notifEmpty:   'لا توجد مهام عاجلة الآن!',
+      badgeLow:     'منخفضة', badgeMed: 'متوسطة', badgeHigh: 'عالية',
+      emptyDone:    'لا يوجد منجز بعد', emptyDoneP: '',
+      emptyActive:  'أحسنت! كل شيء منجز 🎉', emptyActiveP: '',
+      emptyUrgent:  'لا مهام عاجلة', emptyUrgentP: 'كل شيء على ما يرام ✓',
+      emptyAll:     'لا توجد مهام بعد', emptyAllP: 'أضف مهمتك الأولى أعلاه',
+      toastAdded:   'تمت الإضافة!',
+      toastDone:    'تم إنجاز المهمة ✓',
+      toastActive:  'مُعادة للنشطة',
+      toastDeleted: 'تم الحذف',
+      toastCleared: (n) => `تم حذف ${n} مهمة`,
+      dueToday:     'اليوم',
+      dueTomorrow:  'غداً',
+      dueInDays:    (n) => `بعد ${n} أيام`,
+      dueOverdue:   (n) => `متأخر ${n} ${n === 1 ? 'يوم' : 'أيام'}`,
+      dueLabelFull: (info) => {
+        if (info.status === 'overdue') return `متأخر ${info.days} ${info.days === 1 ? 'يوم' : 'أيام'}`;
+        if (info.label) return `الموعد: ${info.label}`;
+        return `الموعد بعد ${info.days} ${info.days <= 10 ? 'أيام' : 'يوم'}`;
+      },
+      notifOverdue: (n) => `متأخر ${n} ${n === 1 ? 'يوم' : 'أيام'}`,
+      notifSoon:    (label) => `الموعد: ${label}`,
+      locale:       'ar-SA',
+      dir:          'rtl',
+      notifBellTitle: 'التذكيرات',
+    }
+  };
+
+  /* ══════════════════════════════════════════
+     STATE
+  ══════════════════════════════════════════ */
+  let tasks    = [];
+  let filter   = 'all';
+  let priority = 'low';
+  let dueDate  = '';
+  let sortMode = 'date';
+  let lang     = 'en';
+
+  const PRIORITY_ORDER = { high: 0, med: 1, low: 2 };
+
+  /* ══════════════════════════════════════════
+     DOM REFS
+  ══════════════════════════════════════════ */
+  const taskInput    = document.getElementById('taskInput');
+  const dueDateInput = document.getElementById('dueDateInput');
+  const addBtn       = document.getElementById('addBtn');
+  const taskList     = document.getElementById('taskList');
+  const clearBtn     = document.getElementById('clearBtn');
+  const sortBtn      = document.getElementById('sortBtn');
+  const toastWrap    = document.getElementById('toastWrap');
+  const notifBell    = document.getElementById('notifBell');
+  const notifBadge   = document.getElementById('notifBadge');
+  const notifPanel   = document.getElementById('notifPanel');
+  const notifClose   = document.getElementById('notifClose');
+  const notifList    = document.getElementById('notifList');
+  const statTotal    = document.getElementById('statTotal');
+  const statActive   = document.getElementById('statActive');
+  const statDone     = document.getElementById('statDone');
+  const statUrgent   = document.getElementById('statUrgent');
+  const progressBar  = document.getElementById('progressBar');
+  const langBtn      = document.getElementById('langBtn');
+
+  /* ══════════════════════════════════════════
+     STORAGE
+  ══════════════════════════════════════════ */
+  let memStore = null;
+
+  function storageOk() {
+    try { localStorage.setItem('_t','1'); localStorage.removeItem('_t'); return true; }
+    catch(e) { return false; }
+  }
+
+  const useLocal = storageOk();
+
+  function load() {
+    try {
+      const raw = useLocal ? localStorage.getItem('flowtask_v4') : memStore;
+      if (raw) tasks = JSON.parse(raw);
+      if (!Array.isArray(tasks)) tasks = [];
+    } catch(e) { tasks = []; }
+
+    // load saved language
+    try {
+      const sl = useLocal ? localStorage.getItem('flowtask_lang') : null;
+      if (sl === 'ar' || sl === 'en') lang = sl;
+    } catch(e) {}
+
+    if (tasks.length === 0) {
+      const iso = d => d.toISOString().split('T')[0];
+      const rel = n => { const d = new Date(); d.setDate(d.getDate() + n); return iso(d); };
+      tasks = [
+        { id: uid(), text: 'تسليم التقرير الفصلي', done: false, priority: 'high', date: Date.now() - 4000, dueDate: rel(-1) },
+        { id: uid(), text: 'اجتماع الفريق الساعة 3 عصراً', done: false, priority: 'med', date: Date.now() - 3000, dueDate: rel(0) },
+        { id: uid(), text: 'مراجعة مقترح المشروع', done: false, priority: 'high', date: Date.now() - 2000, dueDate: rel(2) },
+        { id: uid(), text: 'تحديث مكوّنات نظام التصميم', done: true, priority: 'med', date: Date.now() - 1000, dueDate: rel(5) },
+        { id: uid(), text: 'التخطيط لخارطة طريق الربع الثالث', done: false, priority: 'low', date: Date.now(), dueDate: null },
+      ];
+    }
+  }
+
+  function save() {
+    try {
+      const data = JSON.stringify(tasks);
+      if (useLocal) {
+        localStorage.setItem('flowtask_v4', data);
+        localStorage.setItem('flowtask_lang', lang);
+      } else { memStore = data; }
+      flashSave();
+    } catch(e) {}
+  }
+
+  function flashSave() {
+    const el = document.getElementById('saveIndicator');
+    if (!el) return;
+    el.textContent = t().saveInd;
+    el.classList.add('saved');
+    clearTimeout(el._t);
+    el._t = setTimeout(() => el.classList.remove('saved'), 1500);
+  }
+
+  function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+
+  /* ══════════════════════════════════════════
+     LANGUAGE
+  ══════════════════════════════════════════ */
+  function t() { return T[lang]; }
+
+  function applyLang() {
+    const tr = t();
+    const html = document.documentElement;
+    html.lang = lang;
+    html.dir  = tr.dir;
+
+    document.getElementById('headerSub').textContent   = tr.headerSub;
+    document.getElementById('langLabel').textContent   = tr.langLabel;
+    taskInput.placeholder                              = tr.addPlaceholder;
+    document.getElementById('addBtnLabel').textContent = tr.addBtn;
+    document.getElementById('lblTotal').textContent    = tr.lblTotal;
+    document.getElementById('lblActive').textContent   = tr.lblActive;
+    document.getElementById('lblDone').textContent     = tr.lblDone;
+    document.getElementById('lblUrgent').textContent   = tr.lblUrgent;
+    document.getElementById('lblPriority').textContent = tr.lblPriority;
+    document.getElementById('lblDue').innerHTML        = `<i class="fas fa-calendar-alt"></i> ${tr.lblDue}`;
+    document.getElementById('chipLow').textContent     = tr.chipLow;
+    document.getElementById('chipMed').textContent     = tr.chipMed;
+    document.getElementById('chipHigh').textContent    = tr.chipHigh;
+    document.getElementById('fAll').textContent        = tr.fAll;
+    document.getElementById('fActive').textContent     = tr.fActive;
+    document.getElementById('fDone').textContent       = tr.fDone;
+    document.getElementById('fUrgent').textContent     = tr.fUrgent;
+    document.getElementById('sortLabel').textContent   = tr[`sort${sortMode.charAt(0).toUpperCase() + sortMode.slice(1)}`] || tr.sortDate;
+    document.getElementById('clearLabel').textContent  = tr.clearDone;
+    document.getElementById('saveIndicator').textContent = tr.saveInd;
+    document.getElementById('footerHint').innerHTML    = tr.footerHint;
+    document.getElementById('notifTitle').textContent  = tr.notifTitle;
+    notifBell.title                                    = tr.notifBellTitle;
+  }
+
+  langBtn.addEventListener('click', () => {
+    lang = lang === 'en' ? 'ar' : 'en';
+    applyLang();
+    save();
+    render();
+    if (notifPanel.classList.contains('open')) buildNotifPanel();
+  });
+
+  /* ══════════════════════════════════════════
+     DUE DATE HELPERS
+  ══════════════════════════════════════════ */
+  function getDueStatus(task) {
+    if (!task.dueDate || task.done) return null;
+    const now  = new Date(); now.setHours(0,0,0,0);
+    const due  = new Date(task.dueDate + 'T00:00:00');
+    const diffD = Math.round((due - now) / 86400000);
+    if (diffD < 0)   return { status: 'overdue', days: Math.abs(diffD) };
+    if (diffD === 0) return { status: 'soon', days: 0, label: t().dueToday };
+    if (diffD === 1) return { status: 'soon', days: 1, label: t().dueTomorrow };
+    if (diffD <= 3)  return { status: 'soon', days: diffD };
+    return { status: 'ok', days: diffD };
+  }
+
+  function dueLabelShort(info) {
+    if (!info) return '';
+    if (info.status === 'overdue') return t().dueOverdue(info.days);
+    if (info.label) return info.label;
+    return t().dueInDays(info.days);
+  }
+
+  function fmtDateLong(iso) {
+    if (!iso) return '';
+    const d = new Date(iso + 'T00:00:00');
+    return d.toLocaleDateString(t().locale, { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  /* ══════════════════════════════════════════
+     TOAST
+  ══════════════════════════════════════════ */
+  function toast(msg, icon = 'fa-check', type = '', duration = 3000) {
+    const el = document.createElement('div');
+    el.className = 'toast' + (type ? ' ' + type : '');
+    el.innerHTML = `<i class="fas ${icon}"></i><span>${msg}</span>`;
+    toastWrap.appendChild(el);
+    setTimeout(() => {
+      el.style.animation = 'toastOut 0.3s ease both';
+      setTimeout(() => el.remove(), 300);
+    }, duration);
+  }
+
+  /* ══════════════════════════════════════════
+     STATS
+  ══════════════════════════════════════════ */
+  function updateStats() {
+    const total  = tasks.length;
+    const done   = tasks.filter(t => t.done).length;
+    const active = total - done;
+    const urgent = tasks.filter(t => {
+      if (t.done) return false;
+      const s = getDueStatus(t);
+      return s && (s.status === 'overdue' || s.status === 'soon');
+    }).length;
+
+    statTotal.textContent  = total;
+    statActive.textContent = active;
+    statDone.textContent   = done;
+    statUrgent.textContent = urgent;
+    progressBar.style.width = total === 0 ? '0%' : Math.round((done / total) * 100) + '%';
+
+    if (urgent > 0) { notifBadge.textContent = urgent; notifBadge.classList.add('visible'); }
+    else notifBadge.classList.remove('visible');
+  }
+
+  /* ══════════════════════════════════════════
+     NOTIFICATION PANEL
+  ══════════════════════════════════════════ */
+  function buildNotifPanel() {
+    const urgent = tasks
+      .filter(task => {
+        if (task.done) return false;
+        const s = getDueStatus(task);
+        return s && (s.status === 'overdue' || s.status === 'soon');
+      })
+      .sort((a, b) => {
+        const sa = getDueStatus(a), sb = getDueStatus(b);
+        const score = s => s.status === 'overdue' ? -10000 + s.days : s.days;
+        return score(sa) - score(sb);
+      });
+
+    notifList.innerHTML = '';
+
+    if (urgent.length === 0) {
+      notifList.innerHTML = `<div class="notif-empty"><i class="fas fa-check-circle"></i>${t().notifEmpty}</div>`;
+      return;
+    }
+
+    urgent.forEach(task => {
+      const info = getDueStatus(task);
+      const div  = document.createElement('div');
+      div.className = 'notif-item';
+
+      const dueText = info.status === 'overdue'
+        ? t().notifOverdue(info.days)
+        : t().notifSoon(info.label || t().dueInDays(info.days));
+
+      const badgeText = lang === 'ar'
+        ? (task.priority === 'high' ? t().badgeHigh : task.priority === 'med' ? t().badgeMed : t().badgeLow)
+        : task.priority;
+
+      div.innerHTML = `
+        <div class="notif-dot ${info.status}"></div>
+        <div class="notif-text">
+          <div class="notif-task">${escHtml(task.text)}</div>
+          <div class="notif-due">
+            <i class="fas fa-${info.status === 'overdue' ? 'circle-exclamation' : 'clock'}"
+               style="color:var(--${info.status === 'overdue' ? 'danger' : 'warn'})"></i>
+            ${dueText}
+            <span style="opacity:0.5">·</span>
+            <span class="task-badge badge-${task.priority}">${badgeText}</span>
+          </div>
+        </div>`;
+
+      div.addEventListener('click', () => {
+        notifPanel.classList.remove('open');
+        setFilter('all');
+        setTimeout(() => {
+          const el = document.querySelector(`[data-id="${task.id}"]`);
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            el.style.outline = `2px solid var(--${info.status === 'overdue' ? 'danger' : 'warn'})`;
+            el.style.outlineOffset = '2px';
+            setTimeout(() => { el.style.outline = ''; el.style.outlineOffset = ''; }, 1800);
+          }
+        }, 120);
+      });
+
+      notifList.appendChild(div);
+    });
+  }
+
+  notifBell.addEventListener('click', e => {
+    e.stopPropagation();
+    const wasOpen = notifPanel.classList.contains('open');
+    notifPanel.classList.toggle('open');
+    if (!wasOpen) buildNotifPanel();
+  });
+
+  notifClose.addEventListener('click', () => notifPanel.classList.remove('open'));
+
+  document.addEventListener('click', e => {
+    if (!notifPanel.contains(e.target) && !notifBell.contains(e.target))
+      notifPanel.classList.remove('open');
+  });
+
+  /* ══════════════════════════════════════════
+     RENDER
+  ══════════════════════════════════════════ */
+  function getFiltered() {
+    let list = [...tasks];
+    if (filter === 'active') list = list.filter(t => !t.done);
+    if (filter === 'done')   list = list.filter(t =>  t.done);
+    if (filter === 'urgent') list = list.filter(t => {
+      if (t.done) return false;
+      const s = getDueStatus(t);
+      return s && (s.status === 'overdue' || s.status === 'soon');
+    });
+
+    if (sortMode === 'priority') {
+      list.sort((a,b) => (PRIORITY_ORDER[a.priority]||2) - (PRIORITY_ORDER[b.priority]||2));
+    } else if (sortMode === 'due') {
+      list.sort((a,b) => {
+        const da = a.dueDate ? new Date(a.dueDate) : new Date('9999');
+        const db = b.dueDate ? new Date(b.dueDate) : new Date('9999');
+        return da - db;
+      });
+    } else {
+      list.sort((a,b) => b.date - a.date);
+    }
+    return list;
+  }
+
+  function render() {
+    const list = getFiltered();
+    taskList.innerHTML = '';
+
+    if (list.length === 0) {
+      const msgs = {
+        done:   [t().emptyDone,   t().emptyDoneP],
+        active: [t().emptyActive, t().emptyActiveP],
+        urgent: [t().emptyUrgent, t().emptyUrgentP],
+        all:    [t().emptyAll,    t().emptyAllP],
+      };
+      const [h, p] = msgs[filter] || msgs.all;
+      taskList.innerHTML = `<div class="empty-state"><div class="empty-icon"><i class="fas fa-inbox"></i></div><h3>${h}</h3><p>${p}</p></div>`;
+      updateStats(); return;
+    }
+
+    list.forEach(task => taskList.appendChild(makeItem(task)));
+    updateStats();
+  }
+
+  function makeItem(task) {
+    const li   = document.createElement('li');
+    const info = getDueStatus(task);
+
+    let cls = 'task-item';
+    if (task.done) cls += ' done';
+    else if (info) cls += info.status === 'overdue' ? ' overdue' : info.status === 'soon' ? ' due-soon' : '';
+
+    li.className  = cls;
+    li.dataset.id = task.id;
+    li.dataset.p  = task.priority;
+
+    const created = new Date(task.date).toLocaleDateString(t().locale, { month:'short', day:'numeric' });
+
+    const badgeText = lang === 'ar'
+      ? (task.priority === 'high' ? t().badgeHigh : task.priority === 'med' ? t().badgeMed : t().badgeLow)
+      : task.priority;
+
+    let dueHtml = '';
+    if (info) {
+      const icon = info.status === 'overdue' ? 'fa-circle-exclamation' : 'fa-clock';
+      dueHtml = `<span class="due-chip ${info.status}"><i class="fas ${icon}"></i>${dueLabelShort(info)}</span>`;
+    } else if (task.dueDate) {
+      dueHtml = `<span class="due-chip ok"><i class="fas fa-calendar-check"></i>${fmtDateLong(task.dueDate)}</span>`;
+    }
+
+    li.innerHTML = `
+      <div class="check-wrap">
+        <div class="check-custom${task.done ? ' checked':''}"><i class="fas fa-check"></i></div>
+      </div>
+      <div class="task-body">
+        <div class="task-text${task.done ? ' done-text':''}">${escHtml(task.text)}</div>
+        <div class="task-meta">
+          <span class="task-created">${created}</span>
+          <span class="task-badge badge-${task.priority}">${badgeText}</span>
+          ${dueHtml}
+        </div>
+      </div>
+      <div class="task-actions">
+        <button class="icon-btn edit" title="${lang === 'ar' ? 'تعديل' : 'Edit'}"><i class="fas fa-pen"></i></button>
+        <button class="icon-btn del"  title="${lang === 'ar' ? 'حذف' : 'Delete'}"><i class="fas fa-trash"></i></button>
+      </div>`;
+
+    li.querySelector('.check-custom').addEventListener('click', () => {
+      const task2 = findTask(task.id);
+      if (!task2) return;
+      task2.done = !task2.done;
+      save(); render();
+      toast(task2.done ? t().toastDone : t().toastActive, task2.done ? 'fa-check' : 'fa-rotate-left');
+    });
+
+    li.querySelector('.task-text').addEventListener('dblclick', () => startEdit(li, task.id));
+    li.querySelector('.edit').addEventListener('click', () => startEdit(li, task.id));
+
+    li.querySelector('.del').addEventListener('click', () => {
+      tasks = tasks.filter(t => t.id !== task.id);
+      save(); render(); toast(t().toastDeleted, 'fa-trash');
+    });
+
+    return li;
+  }
+
+  /* ══════════════════════════════════════════
+     INLINE EDIT
+  ══════════════════════════════════════════ */
+  function startEdit(li, id) {
+    const task = findTask(id);
+    if (!task) return;
+    const textEl = li.querySelector('.task-text');
+    const orig   = task.text;
+
+    const inp = document.createElement('input');
+    inp.className = 'edit-input'; inp.value = orig;
+    inp.dir = document.documentElement.dir;
+    textEl.replaceWith(inp); inp.focus();
+
+    const commit = () => {
+      const val = inp.value.trim();
+      if (val) { task.text = val.slice(0,120); save(); }
+      render();
+    };
+
+    inp.addEventListener('blur', commit);
+    inp.addEventListener('keydown', e => {
+      if (e.key === 'Enter')  inp.blur();
+      if (e.key === 'Escape') { task.text = orig; render(); }
+    });
+  }
+
+  /* ══════════════════════════════════════════
+     ADD TASK
+  ══════════════════════════════════════════ */
+  function addTask() {
+    const text = taskInput.value.trim();
+    if (!text) {
+      taskInput.style.borderColor = 'rgba(255,107,107,0.5)';
+      taskInput.focus();
+      setTimeout(() => taskInput.style.borderColor = '', 1000);
+      return;
+    }
+
+    tasks.unshift({
+      id: uid(), text: text.slice(0,120),
+      done: false, priority, date: Date.now(),
+      dueDate: dueDate || null
+    });
+
+    save();
+    taskInput.value = ''; dueDateInput.value = ''; dueDate = '';
+    taskInput.focus();
+    if (filter === 'done') setFilter('all');
+    render();
+    toast(t().toastAdded, 'fa-plus');
+  }
+
+  /* ══════════════════════════════════════════
+     PRIORITY
+  ══════════════════════════════════════════ */
+  document.querySelectorAll('.priority-chip').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.priority-chip').forEach(b => b.classList.remove('sel'));
+      btn.classList.add('sel');
+      priority = btn.dataset.p;
+    });
+  });
+
+  /* ── DUE DATE ── */
+  dueDateInput.addEventListener('change', () => { dueDate = dueDateInput.value; });
+
+  /* ══════════════════════════════════════════
+     FILTER
+  ══════════════════════════════════════════ */
+  function setFilter(f) {
+    filter = f;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.toggle('active', b.dataset.filter === f));
+    render();
+  }
+
+  document.querySelectorAll('.filter-btn').forEach(btn => btn.addEventListener('click', () => setFilter(btn.dataset.filter)));
+
+  /* ══════════════════════════════════════════
+     SORT (3-cycle)
+  ══════════════════════════════════════════ */
+  const SORT_CYCLE = ['date', 'priority', 'due'];
+
+  sortBtn.addEventListener('click', () => {
+    const idx = SORT_CYCLE.indexOf(sortMode);
+    sortMode  = SORT_CYCLE[(idx + 1) % SORT_CYCLE.length];
+    const key = `sort${sortMode.charAt(0).toUpperCase() + sortMode.slice(1)}`;
+    document.getElementById('sortLabel').textContent = t()[key] || t().sortDate;
+    render();
+  });
+
+  /* ══════════════════════════════════════════
+     CLEAR DONE
+  ══════════════════════════════════════════ */
+  clearBtn.addEventListener('click', () => {
+    const count = tasks.filter(tk => tk.done).length;
+    if (!count) return;
+    tasks = tasks.filter(tk => !tk.done);
+    save(); render(); toast(t().toastCleared(count), 'fa-trash');
+  });
+
+  /* ── KEYBOARD ── */
+  addBtn.addEventListener('click', addTask);
+  taskInput.addEventListener('keydown', e => { if (e.key === 'Enter') addTask(); });
+
+  /* ══════════════════════════════════════════
+     SMART REMINDERS
+  ══════════════════════════════════════════ */
+  const shownAlerts = new Set();
+
+  function checkReminders() {
+    const urgent = tasks.filter(tk => {
+      if (tk.done || !tk.dueDate) return false;
+      const s = getDueStatus(tk);
+      return s && (s.status === 'overdue' || s.status === 'soon');
+    });
+
+    urgent.forEach((task, i) => {
+      const key = task.id + '_' + task.dueDate + '_' + lang;
+      if (shownAlerts.has(key)) return;
+      shownAlerts.add(key);
+      const info = getDueStatus(task);
+      const isOverdue = info.status === 'overdue';
+      setTimeout(() => {
+        toast(
+          `<strong>${escHtml(task.text.slice(0,45))}${task.text.length > 45 ? '…' : ''}</strong> — ${t().dueLabelFull(info)}`,
+          isOverdue ? 'fa-circle-exclamation' : 'fa-clock',
+          isOverdue ? 'danger' : 'warn',
+          4500
+        );
+      }, i * 750);
+    });
+  }
+
+  /* ══════════════════════════════════════════
+     UTILS
+  ══════════════════════════════════════════ */
+  function findTask(id) { return tasks.find(tk => tk.id === id); }
+  function escHtml(s)   { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+  /* ══════════════════════════════════════════
+     INIT
+  ══════════════════════════════════════════ */
+  load();
+  applyLang();
+  render();
+  setTimeout(checkReminders, 1200);
+  setInterval(checkReminders, 60000);
+
+})();
+</script>
+</body>
+</html>
